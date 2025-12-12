@@ -26,8 +26,8 @@ Taskport no intenta “decidir por ti”.  Te da **contexto técnico inmediato**
 - **Estado**: memoria local + log circular  
 - **Reglas**: `rules.json` (fuente única de verdad)
 
-Archivo principal: `taskport.py` :contentReference[oaicite:0]{index=0}  
-Definición de reglas: `rules.json` :contentReference[oaicite:1]{index=1}  
+Archivo principal: `taskport.py` 
+Definición de reglas: `rules.json`
 
 ---
 
