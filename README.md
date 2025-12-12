@@ -2,6 +2,8 @@
 
 Taskport es una herramienta **local**, **autónoma** y **visual** de **inspección en tiempo real de puertos, procesos y conexiones de red**, orientada a **detección temprana de comportamientos anómalos** en sistemas Linux de escritorio o servidor. No es un IDS ni un firewall, es un visor cognitivo que muestra el estado de la red por proceso y conexión, con reglas personalizables. 
 
+![Captura](captura.png)
+
 ## Qué hace Taskport
 
 Enumera **todas las conexiones TCP/UDP activas** del sistema y asocia cada conexión a su **PID, proceso, usuario, binario y proceso padre**.
