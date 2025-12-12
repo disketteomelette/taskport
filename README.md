@@ -2,6 +2,8 @@
 
 Taskport es una herramienta **local**, **autónoma** y **visual** de **inspección en tiempo real de puertos, procesos y conexiones de red**, orientada a **detección temprana de comportamientos anómalos** en sistemas Linux de escritorio o servidor. No es un IDS ni un firewall, es un visor cognitivo que muestra el estado de la red por proceso y conexión, con reglas personalizables. 
 
+Taskport se despliega como un servicio web local. Se ejecuta con `python3 taskport.py` y se accede mediante navegador web en la URL `http://localhost:1010.
+
 ![Captura](captura.png)
 
 ## Qué hace Taskport
