@@ -1,0 +1,290 @@
+{
+  "meta": {
+    "version": 1,
+    "note": "Fuente única de verdad para reglas de TASKPORT"
+  },
+  "rules": [
+    {
+      "id": "proceso_conocido",
+      "enabled": true,
+      "severity": 0,
+      "badge": "tp",
+      "description": {
+        "why": "Conexión interna, muy probablemente del propio TaskPort (localhost).",
+        "fp": "Ninguno.",
+        "what": "No requiere acción."
+      },
+      "when": {
+        "all": [
+          { "field": "self", "op": "eq", "value": true }
+        ]
+      }
+    },
+
+    {
+      "id": "remote_desktop_ports",
+      "enabled": true,
+      "severity": 3,
+      "badge": "REMOTE_DESKTOP",
+      "description": {
+        "why": "Uso de puertos típicos de escritorio remoto.",
+        "fp": "Administración legítima.",
+        "what": "Confirmar si el acceso remoto está autorizado."
+      },
+      "when": {
+        "all": [
+          { "field": "status", "op": "eq", "value": "ESTABLISHED" },
+          {
+            "any": [
+              { "field": "rport", "op": "in", "value": [3389, 5900, 5901, 5902] },
+              { "field": "rport", "op": "in", "value": [5938, 7070] }
+            ]
+          }
+        ]
+      }
+    },
+
+    {
+      "id": "ssh_outbound",
+      "enabled": true,
+      "severity": 2,
+      "badge": "SSH_OUT",
+      "description": {
+        "why": "Conexión SSH saliente detectada.",
+        "fp": "Git, túneles legítimos.",
+        "what": "Verificar destino y usuario."
+      },
+      "when": {
+        "all": [
+          { "field": "dir", "op": "eq", "value": "OUT" },
+          { "field": "rport", "op": "eq", "value": 22 }
+        ]
+      }
+    },
+
+    {
+      "id": "fake_web_listener",
+      "enabled": true,
+      "severity": 3,
+      "badge": "FAKE_WEB",
+      "description": {
+        "why": "Proceso no estándar escuchando en puerto web.",
+        "fp": "Servidores dev locales.",
+        "what": "Revisar binario y tráfico."
+      },
+      "when": {
+        "all": [
+          { "field": "status", "op": "eq", "value": "LISTEN" },
+          { "field": "port", "op": "in", "value": [80, 443] },
+          { "field": "exe_standard", "op": "eq", "value": false }
+        ]
+      }
+    },
+
+    {
+      "id": "ephemeral_web_c2",
+      "enabled": true,
+      "severity": 3,
+      "badge": "EPHEMERAL_C2",
+      "description": {
+        "why": "Ejecutable efímero comunicando por puerto web con IP pública.",
+        "fp": "Testing puntual.",
+        "what": "Priorizar análisis."
+      },
+      "when": {
+        "all": [
+          { "field": "exe_standard", "op": "eq", "value": false },
+          { "field": "alerts", "op": "contains", "value": "exe_sospechoso" },
+          { "field": "alerts", "op": "contains", "value": "ip_publica" },
+          { "field": "rport", "op": "in", "value": [80, 443] }
+        ]
+      }
+    },
+
+    {
+      "id": "root_exposed_listener",
+      "enabled": true,
+      "severity": 2,
+      "badge": "ROOT_EXPOSED",
+      "description": {
+        "why": "Proceso root escuchando expuesto en puerto no estándar.",
+        "fp": "Servicios internos.",
+        "what": "Revisar firewall y unidad systemd."
+      },
+      "when": {
+        "all": [
+          { "field": "user", "op": "eq", "value": "root" },
+          { "field": "status", "op": "eq", "value": "LISTEN" },
+          { "field": "alerts", "op": "contains", "value": "listen_expuesto" },
+          { "field": "port", "op": "not_in", "value": [22, 80, 443] }
+        ]
+      }
+    },
+
+    {
+      "id": "beaconing_pattern",
+      "enabled": true,
+      "severity": 2,
+      "badge": "BEACONING",
+      "description": {
+        "why": "Patrón de múltiples conexiones cortas repetidas.",
+        "fp": "APIs ruidosas.",
+        "what": "Analizar periodicidad."
+      },
+      "when": {
+        "all": [
+          { "field": "fanout", "op": "gte", "value": 30 },
+          { "field": "age_s", "op": "lt", "value": 60 },
+          { "field": "alerts", "op": "contains", "value": "ip_publica" }
+        ]
+      }
+    },
+
+    {
+      "id": "proceso_normal",
+      "enabled": true,
+      "severity": 0,
+      "badge": "proceso_normal",
+      "description": {
+        "why": "Proceso root legítimo (whitelist nombre+ruta) con salida de red esperada.",
+        "fp": "Ninguno.",
+        "what": "No requiere acción."
+      },
+      "when": {
+        "all": [
+          { "field": "self", "op": "eq", "value": false },
+          { "field": "user", "op": "eq", "value": "root" },
+          { "field": "dir", "op": "eq", "value": "OUT" },
+          { "field": "name", "op": "in", "value": ["apt","apt-get","unattended-upgrade","aptitude","dnf","yum","pacman","systemd-timesyncd","chronyd","ntpd","NetworkManager","avahi-daemon","cupsd","dockerd","docker","containerd","podman","rsyslogd"] },
+          { "field": "exe_standard", "op": "eq", "value": true }
+        ]
+      }
+    },
+
+    {
+      "id": "root_outbound",
+      "enabled": true,
+      "severity": 3,
+      "badge": "root_outbound",
+      "description": {
+        "why": "Proceso root con salida de red NO reconocido como normal.",
+        "fp": "Servicios propios/scripts admin.",
+        "what": "Revisar exe/cmdline/destino."
+      },
+      "when": {
+        "all": [
+          { "field": "self", "op": "eq", "value": false },
+          { "field": "user", "op": "eq", "value": "root" },
+          { "field": "dir", "op": "eq", "value": "OUT" },
+          {
+            "not": {
+              "all": [
+                { "field": "alerts", "op": "contains", "value": "proceso_normal" }
+              ]
+            }
+          }
+        ]
+      }
+    },
+
+    {
+      "id": "remote_port_raro",
+      "enabled": true,
+      "severity": 2,
+      "badge": "remote_port_raro",
+      "description": {
+        "why": "ESTABLISHED a puerto remoto poco habitual.",
+        "fp": "Apps corporativas/VPN/juegos.",
+        "what": "Validar IP/puerto y proceso."
+      },
+      "when": {
+        "all": [
+          { "field": "self", "op": "eq", "value": false },
+          { "field": "status", "op": "eq", "value": "ESTABLISHED" },
+          { "field": "rport", "op": "gt", "value": 0 },
+          { "field": "rport", "op": "not_in", "value": [53,22,123,25,587,993,995,110,143,465,80,443] }
+        ]
+      }
+    },
+
+    {
+      "id": "web_port_sospechoso",
+      "enabled": true,
+      "severity": 2,
+      "badge": "web_port_sospechoso",
+      "description": {
+        "why": "Conexión en 80/443 con contexto sospechoso (persistencia/fanout/ejecutable).",
+        "fp": "Browsers/proxies/VPNs/websockets.",
+        "what": "Validar proceso, exe, cmdline y destino."
+      },
+      "when": {
+        "all": [
+          { "field": "self", "op": "eq", "value": false },
+          { "field": "status", "op": "eq", "value": "ESTABLISHED" },
+          { "field": "rport", "op": "in", "value": [80,443] },
+          {
+            "any": [
+              { "field": "alerts", "op": "contains", "value": "persistente>10m" },
+              { "field": "fanout", "op": "gte", "value": 25 },
+              { "field": "alerts", "op": "contains", "value": "exe_sospechoso" },
+              { "field": "alerts", "op": "contains", "value": "exe_en_home" }
+            ]
+          }
+        ]
+      }
+    },
+
+    {
+      "id": "listen_ephemeral",
+      "enabled": true,
+      "severity": 3,
+      "badge": "listen_ephemeral",
+      "description": {
+        "why": "LISTEN en puerto efímero alto (>=49152).",
+        "fp": "Dev servers/IDE/port-forward.",
+        "what": "Mirar bind y cmdline."
+      },
+      "when": {
+        "all": [
+          { "field": "status", "op": "eq", "value": "LISTEN" },
+          { "field": "port", "op": "gte", "value": 49152 }
+        ]
+      }
+    },
+
+    {
+      "id": "fanout_alto",
+      "enabled": true,
+      "severity": 2,
+      "badge": "fanout_alto",
+      "description": {
+        "why": "Muchas conexiones simultáneas del mismo PID.",
+        "fp": "Browser/P2P/proxies.",
+        "what": "Mirar destinos."
+      },
+      "when": {
+        "all": [
+          { "field": "fanout", "op": "gte", "value": 25 }
+        ]
+      }
+    },
+
+    {
+      "id": "persistente>10m",
+      "enabled": true,
+      "severity": 2,
+      "badge": "persistente>10m",
+      "description": {
+        "why": "Conexión >10 minutos.",
+        "fp": "VPN/SSH/websockets.",
+        "what": "Validar proceso/destino."
+      },
+      "when": {
+        "all": [
+          { "field": "status", "op": "eq", "value": "ESTABLISHED" },
+          { "field": "age_s", "op": "gte", "value": 600 }
+        ]
+      }
+    }
+  ]
+}
